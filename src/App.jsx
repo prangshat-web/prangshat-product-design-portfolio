@@ -738,6 +738,290 @@ function SectionHead({ kicker, title, em, right }) {
 }
 
 /* ─────────────────────────────────────────────
+   HERO VISUAL — "Transforming Complexity into Clarity"
+   Self-contained, additive overlay for the Hero's empty right space.
+   All classes prefixed `hv-`; derives colour only from existing tokens
+   (--grad / --accent-soft / --line). Animates transform + opacity only.
+───────────────────────────────────────────── */
+const HERO_SKILLS = [
+  // orbit: 1 inner · 2 mid · 3 outer | angle: 0deg = top, clockwise
+  // tier: m = always (mobile) · t = tablet+ · d = desktop only
+  // Ring A (orbit 2, mid) — the 5 tablet-visible cards. angles 72° apart.
+  { label: "Product Design",                 orbit: 2, angle: 0,   tier: "m", fdur: 12,   fdelay: 0   },
+  { label: "User Research",                  orbit: 2, angle: 72,  tier: "m", fdur: 14,   fdelay: 1.5 },
+  { label: "Design Systems",                 orbit: 2, angle: 144, tier: "m", fdur: 13,   fdelay: 2.1 },
+  { label: "UX Strategy",                    orbit: 2, angle: 216, tier: "t", fdur: 15,   fdelay: 0.4 },
+  { label: "Prototyping",                    orbit: 2, angle: 288, tier: "t", fdur: 11.5, fdelay: 1.0 },
+  // Ring B (orbit 3, outer) — desktop-only cards, offset 36° to interleave with Ring A.
+  { label: "Wireframing",                    orbit: 3, angle: 36,  tier: "d", fdur: 16,   fdelay: 0.8 },
+  { label: "Information Architecture",       orbit: 3, angle: 108, tier: "d", fdur: 14.5, fdelay: 0.6 },
+  { label: "Usability Testing",              orbit: 3, angle: 180, tier: "d", fdur: 13.5, fdelay: 2.4 },
+  { label: "Cross-functional Collaboration", orbit: 3, angle: 252, tier: "d", fdur: 15.5, fdelay: 1.2 },
+  { label: "Design Thinking",                orbit: 3, angle: 324, tier: "d", fdur: 12.5, fdelay: 1.8 },
+];
+
+const HERO_ORBITS = {
+  // orbit 1 = decorative inner ring (light node only, no cards) — free to spin independently.
+  // orbits 2 & 3 carry the cards and MUST share period + direction so their 36° interleave
+  // is rigid (guarantees the verified non-overlap holds at every rotation phase).
+  1: { frac: 0.16,  spin: 84, dir: "reverse", nodeAngle: 210 },
+  2: { frac: 0.355, spin: 72, dir: "normal",  nodeAngle: 30  },
+  3: { frac: 0.50,  spin: 72, dir: "normal",  nodeAngle: 160 },
+};
+
+function HeroOrbit({ n }) {
+  const o = HERO_ORBITS[n];
+  const cdir = o.dir === "reverse" ? "normal" : "reverse";
+  const cards = HERO_SKILLS.filter((s) => s.orbit === n);
+  return (
+    <div
+      className={`hv-orbit hv-orbit-${n}`}
+      style={{
+        "--spin": `${o.spin}s`,
+        "--dir": o.dir,
+        "--cdir": cdir,
+        "--rad": `calc(var(--stage) * ${o.frac})`,
+      }}
+    >
+      <div className="hv-ringline" />
+      <div className="hv-lightarm" style={{ "--a": `${o.nodeAngle}deg` }}>
+        <span className="hv-lightnode" />
+      </div>
+      {cards.map((s) => (
+        <div className="hv-arm" key={s.label} data-tier={s.tier} style={{ "--a": `${s.angle}deg` }}>
+          <div className="hv-armlen">
+            <div className="hv-cspin">
+              <div className="hv-cangle" style={{ "--a": `${s.angle}deg` }}>
+                <div className="hv-float" style={{ "--fdur": `${s.fdur}s`, "--fdelay": `${s.fdelay}s` }}>
+                  <span className="hv-card">
+                    <span className="hv-pip" />
+                    <span className="hv-label">{s.label}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function HeroVisual() {
+  const MOBILE = ["Product Design", "User Research", "Design Systems"];
+  return (
+    <Fragment>
+      <style>{`
+        /* ── Placement: absolute overlay over the Hero's empty right space.
+           Never affects the left content's flow (pixel-perfect preserved). ── */
+        .hero-visual {
+          position: absolute; top: 0; bottom: 0; left: 50%;
+          width: 100%; max-width: 1180px; transform: translateX(-50%);
+          padding: 0 40px;
+          display: flex; align-items: center; justify-content: flex-end;
+          pointer-events: none; z-index: 1;
+        }
+        .hv-stage {
+          --stage: clamp(380px, 38vw, 405px);
+          position: relative; flex: none;
+          width: min(var(--stage), calc(100% - 700px));
+          height: min(var(--stage), calc(100% - 700px));
+          aspect-ratio: 1 / 1;
+          margin-top: clamp(0px, 1.5vh, 18px);
+          will-change: transform, opacity;
+          animation: hvAppear 1.1s cubic-bezier(0.16,1,0.3,1) 0.45s both;
+        }
+        @keyframes hvAppear { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
+
+        /* ── Energy core ── */
+        .hv-core { position: absolute; left: 50%; top: 50%; width: 26%; height: 26%;
+          transform: translate(-50%,-50%); }
+        .hv-core-glow {
+          position: absolute; left: 50%; top: 50%; width: 320%; height: 320%;
+          transform: translate(-50%,-50%); border-radius: 50%;
+          background: radial-gradient(circle, var(--grad-soft) 0%, rgba(255,106,0,0.10) 36%, transparent 70%);
+          filter: blur(6px); will-change: opacity;
+          animation: hvGlow 7s ease-in-out infinite;
+        }
+        @keyframes hvGlow { 0%,100% { opacity: 0.6; } 50% { opacity: 0.9; } }
+        .hv-core-orb {
+          position: absolute; inset: 0; border-radius: 50%;
+          background:
+            radial-gradient(circle at 36% 30%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.55) 14%, transparent 42%),
+            radial-gradient(circle at 50% 50%, rgba(255,150,90,0.45) 0%, rgba(238,9,121,0.40) 52%, rgba(238,9,121,0.08) 78%, transparent 100%);
+          box-shadow: 0 0 40px -6px rgba(238,9,121,0.45), inset 0 0 18px -4px rgba(255,255,255,0.55);
+          will-change: transform;
+          animation: hvPulse 8s ease-in-out infinite;
+        }
+        @keyframes hvPulse { 0%,100% { transform: scale(0.98); } 50% { transform: scale(1.02); } }
+        .hv-core-ring {
+          position: absolute; left: 50%; top: 50%; width: 220%; height: 220%;
+          transform: translate(-50%,-50%); border-radius: 50%;
+          border: 1px solid rgba(255,255,255,0.14);
+          box-shadow: inset 0 0 24px -10px rgba(255,255,255,0.30);
+        }
+
+        /* ── Subtle rotating generative sweep (very low opacity) ── */
+        .hv-sweep {
+          position: absolute; inset: -6%; border-radius: 50%; pointer-events: none;
+          background: conic-gradient(from 0deg,
+            transparent 0deg, rgba(255,255,255,0.05) 36deg, transparent 120deg,
+            rgba(238,9,121,0.05) 220deg, transparent 320deg);
+          -webkit-mask-image: radial-gradient(circle, transparent 38%, #000 60%, transparent 82%);
+          mask-image: radial-gradient(circle, transparent 38%, #000 60%, transparent 82%);
+          opacity: 0.55; will-change: transform;
+          animation: hvSpin 60s linear infinite;
+        }
+
+        /* ── Orbits (full-stage overlays; geometry via transforms only) ── */
+        .hv-orbit { position: absolute; inset: 0; will-change: transform;
+          animation: hvSpin var(--spin) linear infinite; animation-direction: var(--dir); }
+        @keyframes hvSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .hv-ringline {
+          position: absolute; left: 50%; top: 50%;
+          width: calc(var(--rad) * 2); height: calc(var(--rad) * 2);
+          transform: translate(-50%,-50%); border-radius: 50%;
+          border: 1px solid rgba(255,255,255,0.07);
+        }
+        .hv-lightarm { position: absolute; left: 50%; top: 50%; width: 0; height: 0;
+          transform: rotate(var(--a)); }
+        .hv-lightnode {
+          position: absolute; left: 0; top: 0;
+          width: 3px; height: 3px; border-radius: 50%; margin: -1.5px;
+          transform: translateY(calc(-1 * var(--rad)));
+          background: rgba(255,255,255,0.7);
+          box-shadow: 0 0 8px 1px rgba(255,160,90,0.6); opacity: 0.5;
+        }
+
+        /* card carrier chain — each element does exactly one transform job */
+        .hv-arm    { position: absolute; left: 50%; top: 50%; width: 0; height: 0;
+          transform: rotate(var(--a)); }
+        .hv-armlen { position: absolute; left: 0; top: 0;
+          transform: translateY(calc(-1 * var(--rad))); }
+        .hv-cspin  { will-change: transform;
+          animation: hvSpin var(--spin) linear infinite; animation-direction: var(--cdir); }
+        .hv-cangle { transform: rotate(calc(-1 * var(--a))); }
+        .hv-float  { will-change: transform;
+          animation: hvFloat var(--fdur) ease-in-out var(--fdelay) infinite alternate; }
+        @keyframes hvFloat { from { transform: translateY(-4px); } to { transform: translateY(4px); } }
+
+        /* ── Glass skill card ── */
+        .hv-card {
+          position: absolute; left: 0; top: 0; transform: translate(-50%,-50%);
+          display: inline-flex; align-items: center; gap: 6px;
+          max-width: 96px; padding: 6px 9px;
+          border-radius: 14px;
+          background: rgba(255,255,255,0.045);
+          border: 1px solid rgba(255,255,255,0.10);
+          -webkit-backdrop-filter: blur(9px); backdrop-filter: blur(9px);
+          box-shadow: 0 8px 22px -14px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.06);
+          pointer-events: auto; cursor: default;
+          transition: transform .25s cubic-bezier(0.22,1,0.36,1), background .25s, border-color .25s, box-shadow .25s;
+        }
+        .hv-card:hover {
+          transform: translate(-50%,-50%) translateY(-4px) scale(1.02);
+          background: rgba(255,255,255,0.075);
+          border-color: rgba(255,255,255,0.22);
+          box-shadow: 0 16px 34px -16px rgba(0,0,0,0.85), inset 0 1px 0 rgba(255,255,255,0.10);
+        }
+        .hv-pip {
+          flex: none; width: 6px; height: 6px; border-radius: 50%;
+          background: var(--grad);
+          box-shadow: 0 0 8px -1px rgba(238,9,121,0.7);
+        }
+        .hv-label {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 9.5px; line-height: 1.28; letter-spacing: 0.01em;
+          color: var(--ink-soft); white-space: normal;
+        }
+
+        /* ── Tablet: 5 cards (ring A only), reduced radius (hide outer ring + desktop-only) ── */
+        @media (max-width: 1179px) {
+          .hv-stage {
+            --stage: clamp(280px, 34vw, 360px);
+            width: min(var(--stage), calc(100% - 650px));
+            height: min(var(--stage), calc(100% - 650px));
+          }
+          .hv-orbit-3 { display: none; }
+          .hv-arm[data-tier="d"] { display: none; }
+          .hv-label { font-size: 9px; }
+          .hv-card { max-width: 90px; padding: 6px 8px; }
+        }
+
+        /* ── Mobile: hide orbit system; keep one glow + three faint cards, fade only ── */
+        .hv-mobile { display: none; }
+        @media (max-width: 1023px) {
+          .hero-visual { display: none; }
+          .hv-mobile {
+            display: block; position: absolute; z-index: 0; pointer-events: none;
+            top: 60px; right: 12px; width: 124px; height: 200px;
+          }
+          .hv-m-glow {
+            position: absolute; right: -40px; top: 6px; width: 200px; height: 200px;
+            border-radius: 50%; filter: blur(10px);
+            background: radial-gradient(circle, var(--grad-soft) 0%, rgba(255,106,0,0.08) 40%, transparent 72%);
+            animation: hvGlow 7s ease-in-out infinite;
+          }
+          .hv-m-card {
+            position: absolute; display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 10px; border-radius: 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.09);
+            -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+            box-shadow: 0 8px 20px -14px rgba(0,0,0,0.8);
+            white-space: nowrap; opacity: 0; will-change: opacity;
+            animation: hvMobileFade 9s ease-in-out infinite;
+          }
+          .hv-m-card .hv-pip { width: 6px; height: 6px; }
+          .hv-m-card .hv-label { font-size: 9.5px; white-space: nowrap; }
+          .hv-m-card:nth-child(2) { top: 0;   right: 0;  animation-delay: 0s;   }
+          .hv-m-card:nth-child(3) { top: 70px; right: 34px; animation-delay: 1.6s; }
+          .hv-m-card:nth-child(4) { top: 140px; right: 4px; animation-delay: 3.2s; }
+          @keyframes hvMobileFade {
+            0%, 100% { opacity: 0.18; } 50% { opacity: 0.62; }
+          }
+        }
+
+        /* ── Reduced motion: static, calm composition (no spin / float / pulse) ── */
+        @media (prefers-reduced-motion: reduce) {
+          .hv-stage, .hv-core-orb, .hv-core-glow, .hv-sweep,
+          .hv-orbit, .hv-cspin, .hv-float, .hv-m-glow, .hv-m-card {
+            animation: none !important;
+          }
+          .hv-stage { opacity: 1; transform: none; }
+          .hv-m-card { opacity: 0.4; }
+        }
+      `}</style>
+
+      <div className="hero-visual" aria-hidden="true">
+        <div className="hv-stage">
+          <div className="hv-sweep" />
+          <div className="hv-core">
+            <div className="hv-core-glow" />
+            <div className="hv-core-ring" />
+            <div className="hv-core-orb" />
+          </div>
+          <HeroOrbit n={3} />
+          <HeroOrbit n={2} />
+          <HeroOrbit n={1} />
+        </div>
+      </div>
+
+      <div className="hv-mobile" aria-hidden="true">
+        <span className="hv-m-glow" />
+        {MOBILE.map((label) => (
+          <span className="hv-m-card" key={label}>
+            <span className="hv-pip" />
+            <span className="hv-label">{label}</span>
+          </span>
+        ))}
+      </div>
+    </Fragment>
+  );
+}
+
+/* ─────────────────────────────────────────────
    HOME
 ───────────────────────────────────────────── */
 function HomePage({ go, openCase }) {
@@ -783,6 +1067,7 @@ function HomePage({ go, openCase }) {
           </div>
 
         </div>
+        <HeroVisual />
       </section>
 
       {/* WORK */}
